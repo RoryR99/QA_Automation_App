@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.npm-cache/
+.vs/
+*.tsbuildinfo
+.env
+server/*.db
+server/*.sqlite
+server/*.sqlite3
