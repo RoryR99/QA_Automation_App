@@ -587,11 +587,11 @@ export function IndexPage() {
           <div className="rounded-2xl border border-border/70 bg-white/65 px-4 py-3 text-sm text-muted-foreground">
             {recentRuns && recentRuns.length > 0 ? (
               <>
-                <span className="font-medium text-primary">{recentRuns.length}</span> saved run
+                <span className="font-medium text-primary">{recentRuns.length}</span> production run
                 {recentRuns.length === 1 ? '' : 's'} available in history.
               </>
             ) : (
-              'No saved runs yet. The first run you start here will appear in history.'
+              'No production runs recorded yet.'
             )}
           </div>
 

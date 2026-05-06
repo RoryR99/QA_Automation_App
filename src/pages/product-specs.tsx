@@ -430,9 +430,7 @@ export function ProductSpecsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-xl">Product Selection</CardTitle>
-              <CardDescription>
-                Select brand, flavor, and pack size to auto-populate specification limits from the image-based mock data.
-              </CardDescription>
+              <CardDescription>Select brand, flavor, and pack size to auto-populate specification limits.</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="space-y-2">

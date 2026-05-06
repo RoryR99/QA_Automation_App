@@ -233,7 +233,7 @@ export function HistoryPage() {
       <Card>
         <CardHeader>
           <CardTitle>Production Runs</CardTitle>
-          <CardDescription>Select any saved run to add a fresh primary, secondary, and specs inspection for it.</CardDescription>
+          <CardDescription>Select any production run to add a fresh primary, secondary, and specs inspection for it.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoading ? (
@@ -281,7 +281,7 @@ export function HistoryPage() {
             })
           ) : (
             <div className="rounded-2xl border border-dashed border-border bg-secondary/20 px-4 py-12 text-center">
-              <p className="text-sm text-muted-foreground">No saved production runs yet.</p>
+              <p className="text-sm text-muted-foreground">No production runs recorded yet.</p>
             </div>
           )}
         </CardContent>
@@ -435,9 +435,7 @@ export function HistoryPage() {
             })
           ) : (
             <div className="rounded-2xl border border-dashed border-border bg-secondary/20 px-4 py-12 text-center">
-              <p className="text-sm text-muted-foreground">
-                No inspections saved yet. Walk through the run setup and packaging pages to generate history.
-              </p>
+              <p className="text-sm text-muted-foreground">No inspections have been recorded yet.</p>
             </div>
           )}
         </CardContent>
