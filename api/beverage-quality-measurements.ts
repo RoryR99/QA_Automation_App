@@ -1,7 +1,37 @@
-import { beverageQualityData } from '../src/data/beverage-quality-data';
 import type { BeverageQualityMeasurement } from '../src/types/app';
 import { getSupabaseServerClient } from './_lib/supabase';
 import { sendMethodNotAllowed } from './_lib/responses';
+
+const fallbackBeverageQualityData: BeverageQualityMeasurement[] = [
+  {
+    id: 'fallback-busta-grape-500',
+    brand: 'BUSTA',
+    flavor: 'GRAPE',
+    packsize: '500',
+    frequency: 'Every Hour',
+    fillheightll: 495,
+    fillheightul: 505,
+    brixll: 13,
+    brixul: 13.4,
+    co2ll: 3.4,
+    co2ul: 3.8,
+  },
+  {
+    id: 'fallback-lucozade-apple-500',
+    brand: 'LUCOZADE',
+    flavor: 'APPLE',
+    packsize: '500',
+    frequency: 'Every Hour',
+    fillheightll: 495,
+    fillheightul: 505,
+    brixll: 8.45,
+    brixul: 8.79,
+    co2ll: 3.8,
+    co2ul: 4.2,
+    phll: 2.5,
+    phul: 2.9,
+  },
+];
 
 function readNumber(row: Record<string, unknown>, ...keys: string[]) {
   for (const key of keys) {
@@ -72,9 +102,9 @@ export default async function handler(req: { method?: string }, res: any) {
       .filter((item) => item.brand && item.flavor)
       .sort((a, b) => `${a.brand}|${a.flavor}|${a.packsize}`.localeCompare(`${b.brand}|${b.flavor}|${b.packsize}`));
 
-    return res.status(200).json(mappedData.length ? mappedData : beverageQualityData);
+    return res.status(200).json(mappedData.length ? mappedData : fallbackBeverageQualityData);
   } catch (error) {
     console.error('Failed to load beverage quality measurements', error);
-    return res.status(200).json(beverageQualityData);
+    return res.status(200).json(fallbackBeverageQualityData);
   }
 }
