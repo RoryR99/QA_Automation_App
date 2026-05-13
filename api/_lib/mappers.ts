@@ -1,9 +1,5 @@
 import type {
-  ClosureMeasurementInput,
-  ClosureMeasurementRecord,
-  CreateInspectionExtensionInput,
   CreateInspectionInput,
-  InspectionExtensionRecord,
   InspectionKind,
   InspectionRecord,
   MockUser,
@@ -60,21 +56,5 @@ export function mapInspection(row: InspectionRow): InspectionRecord {
     inspectionType: row.inspection_type,
     createdAt: row.created_at,
     payload: parsePayload<CreateInspectionInput>(row.payload_json),
-  };
-}
-
-export function mapInspectionExtension(row: PayloadRow): InspectionExtensionRecord {
-  return {
-    id: row.id,
-    createdAt: row.created_at,
-    payload: parsePayload<CreateInspectionExtensionInput>(row.payload_json),
-  };
-}
-
-export function mapClosureMeasurement(row: PayloadRow): ClosureMeasurementRecord {
-  return {
-    id: row.id,
-    createdAt: row.created_at,
-    payload: parsePayload<ClosureMeasurementInput>(row.payload_json),
   };
 }

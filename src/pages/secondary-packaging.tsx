@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateInspection } from '@/hooks/use-create-inspection';
-import { useCreateInspectionExtension } from '@/hooks/use-create-inspection-extension';
 import { useUser } from '@/hooks/use-user';
 import { currentProductionRunAtom } from '@/lib/production-run-store';
 import type { InspectionValue } from '@/types/app';
@@ -24,7 +23,6 @@ export function SecondaryPackagingPage() {
   const navigate = useNavigate();
   const currentRun = useAtomValue(currentProductionRunAtom);
   const createInspection = useCreateInspection();
-  const createExtension = useCreateInspectionExtension();
   const { data: user } = useUser();
 
   const [formData, setFormData] = useState({
@@ -67,7 +65,7 @@ export function SecondaryPackagingPage() {
     }
 
     try {
-      const inspection = await createInspection.mutateAsync({
+      await createInspection.mutateAsync({
         hourlyinspectionname: `Secondary Packaging - ${new Date().toLocaleString()}`,
         timestamp: new Date().toISOString(),
         inspector: user?.userPrincipalName ?? 'Unknown',
@@ -79,35 +77,20 @@ export function SecondaryPackagingPage() {
         layerpadKey: formData.layerPad === 'acceptable' ? 'Layerpadkey0' : 'Layerpadkey1',
         amtKey: formData.amt === 'acceptable' ? 'Amtkey0' : 'Amtkey1',
         observations: formData.observations,
+        pallettagsKey: formData.palletTags === 'acceptable' ? 'Pallettagskey0' : 'Pallettagskey1',
+        pallettaginfo: formData.palletTagInfo || undefined,
+        pallettagphotourl: formData.palletTagPhotoUrl || undefined,
+        stickersKey: formData.stickers === 'acceptable' ? 'Stickerskey0' : 'Stickerskey1',
+        stickerinfo: formData.stickerInfo || undefined,
+        stickerphotourl: formData.stickerPhotoUrl || undefined,
+        containmentforcetopkg: formData.containmentForceTop,
+        containmentforcemiddlekg: formData.containmentForceMiddle,
+        containmentforcebottomkg: formData.containmentForceBottom,
+        nonconformancestatus: formData.nonConformanceStatus,
+        nonconformancephotourl: formData.nonConformancePhotoUrl || undefined,
       });
 
-      let extensionSaved = true;
-      try {
-        await createExtension.mutateAsync({
-          extensionname: `Secondary Packaging Details - ${new Date().toLocaleString()}`,
-          relatedInspectionId: inspection.id,
-          productionrunid: { id: currentRun.id, productioncode: currentRun.productioncode },
-          pallettagsKey: formData.palletTags === 'acceptable' ? 'Pallettagskey0' : 'Pallettagskey1',
-          pallettaginfo: formData.palletTagInfo || undefined,
-          pallettagphotourl: formData.palletTagPhotoUrl || undefined,
-          stickersKey: formData.stickers === 'acceptable' ? 'Stickerskey0' : 'Stickerskey1',
-          stickerinfo: formData.stickerInfo || undefined,
-          stickerphotourl: formData.stickerPhotoUrl || undefined,
-          containmentforcetopkg: formData.containmentForceTop,
-          containmentforcemiddlekg: formData.containmentForceMiddle,
-          containmentforcebottomkg: formData.containmentForceBottom,
-          nonconformancestatus: formData.nonConformanceStatus,
-          nonconformancephotourl: formData.nonConformancePhotoUrl || undefined,
-        });
-      } catch {
-        extensionSaved = false;
-      }
-
-      if (!extensionSaved) {
-        toast.warning('Inspection saved, but some additional secondary packaging details failed to save');
-      } else {
-        toast.success('Secondary packaging inspection saved');
-      }
+      toast.success('Secondary packaging inspection saved');
 
       navigate('/product-specs');
     } catch {
@@ -379,10 +362,10 @@ export function SecondaryPackagingPage() {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={createInspection.isPending || createExtension.isPending}
+            disabled={createInspection.isPending}
             className="min-w-[200px]"
           >
-            {createInspection.isPending || createExtension.isPending ? (
+            {createInspection.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...

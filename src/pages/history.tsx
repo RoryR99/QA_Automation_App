@@ -6,8 +6,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useClosureMeasurements } from '@/hooks/use-closure-measurements';
-import { useInspectionExtensions } from '@/hooks/use-inspection-extensions';
 import { useInspectionHistory } from '@/hooks/use-inspection-history';
 import { useRecentRuns } from '@/hooks/use-recent-runs';
 import { currentProductionRunAtom } from '@/lib/production-run-store';
@@ -19,6 +17,7 @@ const hiddenPayloadKeys = new Set([
   'inspector',
   'inspectionType',
   'productionrunid',
+  'closureMeasurements',
 ]);
 
 const fieldLabelOverrides: Record<string, string> = {
@@ -183,10 +182,8 @@ export function HistoryPage() {
   const setCurrentRun = useSetAtom(currentProductionRunAtom);
   const { data: history, isLoading: historyLoading } = useInspectionHistory();
   const { data: runs, isLoading: runsLoading } = useRecentRuns();
-  const { data: extensions, isLoading: extensionsLoading } = useInspectionExtensions();
-  const { data: closureMeasurements, isLoading: closureLoading } = useClosureMeasurements();
 
-  const isLoading = historyLoading || runsLoading || extensionsLoading || closureLoading;
+  const isLoading = historyLoading || runsLoading;
 
   const runsById = useMemo(() => new Map((runs ?? []).map((run) => [run.id, run])), [runs]);
 
@@ -195,14 +192,9 @@ export function HistoryPage() {
     navigate('/primary-packaging');
   };
 
-  const findExtension = (inspection: InspectionRecord) => {
-    return (extensions ?? []).find((extension) => extension.payload.relatedInspectionId === inspection.id);
-  };
-
   const findClosureMeasurements = (inspection: InspectionRecord) => {
-    return (closureMeasurements ?? []).filter(
-      (measurement) => measurement.payload.hourlyinspection?.id === inspection.id,
-    );
+    const value = inspection.payload.closureMeasurements;
+    return Array.isArray(value) ? value : [];
   };
 
   return (
@@ -309,27 +301,7 @@ export function HistoryPage() {
               const textDetails = details.filter(
                 (detail) => !(typeof detail.value === 'string' && isImageValue(detail.key, detail.value)),
               );
-              const extension = findExtension(entry);
               const measurements = findClosureMeasurements(entry);
-              const extensionEntries = extension
-                ? Object.entries(extension.payload).filter(
-                    ([key, value]) => !['extensionname', 'relatedInspectionId', 'productionrunid'].includes(key) && value,
-                  )
-                : [];
-              const extensionPhotoDetails = extensionEntries
-                .map(([key, value]) => ({
-                  key,
-                  label: humanizeKey(key),
-                  value: formatPayloadValue(key, value),
-                }))
-                .filter((detail) => typeof detail.value === 'string' && isImageValue(detail.key, detail.value));
-              const extensionTextDetails = extensionEntries
-                .map(([key, value]) => ({
-                  key,
-                  label: humanizeKey(key),
-                  value: formatPayloadValue(key, value),
-                }))
-                .filter((detail) => detail.value !== null && !(typeof detail.value === 'string' && isImageValue(detail.key, detail.value)));
 
               return (
                 <motion.div
@@ -385,38 +357,18 @@ export function HistoryPage() {
                     </div>
                   )}
 
-                  {extension && (
-                    <div className="mt-5 space-y-3">
-                      <div className="text-sm font-semibold text-foreground">Extension details</div>
-                      {extensionTextDetails.length > 0 && (
-                        <div className="grid gap-3">
-                          {extensionTextDetails.map((detail) => (
-                            <DetailRow key={`${extension.id}-${detail.key}`} label={detail.label} value={detail.value as string} />
-                          ))}
-                        </div>
-                      )}
-                      {extensionPhotoDetails.length > 0 && (
-                        <div className="grid gap-3">
-                          {extensionPhotoDetails.map((detail) => (
-                            <PhotoRow key={`${extension.id}-${detail.key}`} label={detail.label} src={detail.value as string} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   {measurements.length > 0 && (
                     <div className="mt-5 space-y-3">
                       <div className="text-sm font-semibold text-foreground">Closure measurements</div>
                       <div className="grid gap-3">
-                        {measurements.map((measurement) => (
-                          <div key={measurement.id} className="rounded-2xl bg-secondary/35 p-4 text-sm">
+                        {measurements.map((measurement, measurementIndex) => (
+                          <div key={`${entry.id}-closure-${measurementIndex}`} className="rounded-2xl bg-secondary/35 p-4 text-sm">
                             <div className="mb-2 font-medium text-foreground">
-                              Measurement {measurement.payload.measurementnumber}
+                              Measurement {formatPayloadValue('measurementnumber', measurement.measurementnumber) ?? measurementIndex + 1}
                             </div>
                             <div className="grid gap-3 md:grid-cols-2">
-                              <DetailRow label="Application Angle" value={String(measurement.payload.applicationangle)} />
-                              <DetailRow label="Removal Torque" value={String(measurement.payload.removaltorque)} />
+                              <DetailRow label="Application Angle" value={String(measurement.applicationangle ?? '')} />
+                              <DetailRow label="Removal Torque" value={String(measurement.removaltorque ?? '')} />
                             </div>
                           </div>
                         ))}
@@ -424,7 +376,7 @@ export function HistoryPage() {
                     </div>
                   )}
 
-                  {textDetails.length === 0 && photoDetails.length === 0 && !extension && measurements.length === 0 && (
+                  {textDetails.length === 0 && photoDetails.length === 0 && measurements.length === 0 && (
                     <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-800">
                       <TriangleAlert className="h-4 w-4" />
                       No detailed fields were found for this entry.

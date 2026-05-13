@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { useBeverageQualityMeasurementList } from '@/hooks/use-beverage-quality-measurement-list';
-import { useCreateClosureMeasurement } from '@/hooks/use-create-closure-measurement';
 import { useCreateInspection } from '@/hooks/use-create-inspection';
 import { useUser } from '@/hooks/use-user';
 import { currentProductionRunAtom } from '@/lib/production-run-store';
@@ -106,7 +105,6 @@ export function ProductSpecsPage() {
   const navigate = useNavigate();
   const currentRun = useAtomValue(currentProductionRunAtom);
   const createInspection = useCreateInspection();
-  const createClosureMeasurement = useCreateClosureMeasurement();
   const { data: user } = useUser();
   const { data: specifications } = useBeverageQualityMeasurementList();
 
@@ -331,7 +329,7 @@ export function ProductSpecsPage() {
     }
 
     try {
-      const inspection = await createInspection.mutateAsync({
+      await createInspection.mutateAsync({
         hourlyinspectionname: `Product Specs - ${new Date().toLocaleString()}`,
         timestamp: new Date().toISOString(),
         inspector: user?.userPrincipalName ?? 'Unknown',
@@ -355,36 +353,19 @@ export function ProductSpecsPage() {
         cipmethod: cipCompletion ? cipMethodLabels[cipMethod as CipMethod] : undefined,
         copcompletion: copCompletion,
         copchemical: copCompletion ? copChemicalLabels[copChemical as CopChemical] : undefined,
+        closureMeasurements: closureMeasurements
+          .map((measurement, index) => ({
+            measurementnumber: index + 1,
+            applicationangle: measurement.applicationAngle,
+            removaltorque: measurement.removalTorque,
+          }))
+          .filter(
+            (measurement) =>
+              measurement.applicationangle !== undefined || measurement.removaltorque !== undefined,
+          ),
       });
 
-      let measurementErrors = 0;
-
-      for (let index = 0; index < closureMeasurements.length; index += 1) {
-        const measurement = closureMeasurements[index];
-
-        if (measurement.applicationAngle !== undefined || measurement.removalTorque !== undefined) {
-          try {
-            await createClosureMeasurement.mutateAsync({
-              measurementname: `Measurement ${index + 1} - ${new Date().toLocaleString()}`,
-              hourlyinspection: {
-                id: inspection.id,
-                hourlyinspectionname: String(inspection.payload.hourlyinspectionname),
-              },
-              measurementnumber: index + 1,
-              applicationangle: measurement.applicationAngle ?? 0,
-              removaltorque: measurement.removalTorque ?? 0,
-            });
-          } catch {
-            measurementErrors += 1;
-          }
-        }
-      }
-
-      if (measurementErrors > 0) {
-        toast.warning(`Inspection saved, but ${measurementErrors} closure measurement(s) failed to save.`);
-      } else {
-        toast.success('Product specifications inspection saved');
-      }
+      toast.success('Product specifications inspection saved');
 
       navigate('/history');
     } catch {

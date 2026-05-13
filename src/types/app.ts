@@ -72,19 +72,6 @@ export interface StartRunInput {
   codeverificationphoto?: string;
 }
 
-export interface ProductSpec {
-  id: string;
-  brand: string;
-  flavour: string;
-  packageType: string;
-  targetTemperatureF: number;
-  fillVolumeMl: number;
-  closureTorqueNm: string;
-  carbonationRange: string;
-  labelSku: string;
-  allergenNote: string;
-}
-
 export interface BeverageQualityMeasurement {
   id: string;
   brand: string;
@@ -126,38 +113,4 @@ export interface InspectionRecord {
   createdAt: string;
   inspectionType: InspectionKind;
   payload: CreateInspectionInput;
-}
-
-export interface CreateInspectionExtensionInput {
-  extensionname: string;
-  relatedInspectionId?: string;
-  productionrunid?: InspectionReference;
-  pallettagsKey: string;
-  pallettaginfo?: string;
-  stickersKey: string;
-  stickerinfo?: string;
-  [key: string]: unknown;
-}
-
-export interface InspectionExtensionRecord {
-  id: string;
-  createdAt: string;
-  payload: CreateInspectionExtensionInput;
-}
-
-export interface ClosureMeasurementInput {
-  measurementname: string;
-  hourlyinspection?: {
-    id: string;
-    hourlyinspectionname?: string;
-  };
-  measurementnumber: number;
-  applicationangle: number;
-  removaltorque: number;
-}
-
-export interface ClosureMeasurementRecord {
-  id: string;
-  createdAt: string;
-  payload: ClosureMeasurementInput;
 }

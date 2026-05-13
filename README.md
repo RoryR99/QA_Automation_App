@@ -50,10 +50,6 @@ Create the required Supabase tables with [supabase/schema.sql](</C:/Users/rory.r
 - `GET /api/beverage-quality-measurements`
 - `GET /api/inspections`
 - `POST /api/inspections`
-- `GET /api/inspection-extensions`
-- `POST /api/inspection-extensions`
-- `GET /api/closure-measurements`
-- `POST /api/closure-measurements`
 
 ## Local development
 
