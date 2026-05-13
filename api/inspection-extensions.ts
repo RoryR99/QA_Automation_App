@@ -26,6 +26,8 @@ export default async function handler(req: { method?: string; body?: unknown }, 
 
       const row = {
         id: crypto.randomUUID(),
+        related_inspection_id: input.relatedInspectionId || null,
+        production_run_id: input.productionrunid?.id || null,
         created_at: new Date().toISOString(),
         payload_json: input,
       };

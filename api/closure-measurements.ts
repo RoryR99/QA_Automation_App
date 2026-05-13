@@ -24,8 +24,13 @@ export default async function handler(req: { method?: string; body?: unknown }, 
         return res.status(400).json({ message: 'Measurement name is required.' });
       }
 
+      if (!input.hourlyinspection?.id) {
+        return res.status(400).json({ message: 'Related inspection is required.' });
+      }
+
       const row = {
         id: crypto.randomUUID(),
+        hourly_inspection_id: input.hourlyinspection.id,
         created_at: new Date().toISOString(),
         payload_json: input,
       };

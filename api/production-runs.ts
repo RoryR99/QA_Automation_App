@@ -37,6 +37,7 @@ export default async function handler(req: { method?: string; body?: unknown }, 
         package_type: input.packageType,
         line: input.line,
         shift: input.shift,
+        payload_json: input,
         created_at: new Date().toISOString(),
       };
 

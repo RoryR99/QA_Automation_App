@@ -31,7 +31,10 @@ export function mapUser(row: Record<string, unknown>): MockUser {
 }
 
 export function mapProductionRun(row: Record<string, unknown>): ProductionRun {
+  const payload = parsePayload<Partial<ProductionRun>>(row.payload_json ?? {});
+
   return {
+    ...payload,
     id: String(row.id ?? ''),
     productioncode: String(row.productioncode ?? ''),
     brand: String(row.brand ?? ''),

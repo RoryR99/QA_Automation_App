@@ -1,3 +1,5 @@
+import { supabase } from '@/lib/supabase';
+
 async function parseError(response: Response) {
   try {
     const data = (await response.json()) as { message?: string };
@@ -9,9 +11,11 @@ async function parseError(response: Response) {
 
 export async function apiRequest<T>(path: string, init?: RequestInit) {
   const baseUrl = import.meta.env.VITE_API_BASE_URL?.trim() || '/api';
+  const session = supabase ? (await supabase.auth.getSession()).data.session : null;
   const response = await fetch(`${baseUrl}${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
       ...(init?.headers ?? {}),
     },
     ...init,

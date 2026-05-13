@@ -1,21 +1,10 @@
 import { apiRequest } from '@/services/api-client';
-import { mockDb, wait } from '@/services/mock-db';
 import type { ClosureMeasurementRecord, InspectionExtensionRecord } from '@/types/app';
 
 export async function listInspectionExtensions() {
-  try {
-    return await apiRequest<InspectionExtensionRecord[]>('/inspection-extensions');
-  } catch {
-    await wait(150);
-    return mockDb.inspectionExtensions.read<InspectionExtensionRecord>();
-  }
+  return apiRequest<InspectionExtensionRecord[]>('/inspection-extensions');
 }
 
 export async function listClosureMeasurements() {
-  try {
-    return await apiRequest<ClosureMeasurementRecord[]>('/closure-measurements');
-  } catch {
-    await wait(150);
-    return mockDb.closureMeasurements.read<ClosureMeasurementRecord>();
-  }
+  return apiRequest<ClosureMeasurementRecord[]>('/closure-measurements');
 }
