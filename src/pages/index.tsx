@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSetAtom } from 'jotai';
 import { motion } from 'motion/react';
@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useBeverageQualityMeasurementList } from '@/hooks/use-beverage-quality-measurement-list';
 import { useRecentRuns } from '@/hooks/use-recent-runs';
 import { useUser } from '@/hooks/use-user';
 import { currentProductionRunAtom } from '@/lib/production-run-store';
@@ -122,7 +121,6 @@ export function IndexPage() {
   const queryClient = useQueryClient();
   const setCurrentRun = useSetAtom(currentProductionRunAtom);
   const { data: recentRuns } = useRecentRuns();
-  const { data: beverageQualityData } = useBeverageQualityMeasurementList();
   const { data: user } = useUser();
   const [form, setForm] = useState<RunFormState>(buildInitialForm);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -134,27 +132,9 @@ export function IndexPage() {
     }
   }, [form.qatechnician, user?.displayName]);
 
-  const brandOptions = useMemo(() => {
-    return Array.from(new Set((beverageQualityData ?? []).map((item) => item.brand).filter(Boolean))).sort();
-  }, [beverageQualityData]);
-
-  const flavourOptions = useMemo(() => {
-    const matchingRows = (beverageQualityData ?? []).filter((item) => !form.brand || item.brand === form.brand);
-    return Array.from(new Set(matchingRows.map((item) => item.flavor).filter(Boolean))).sort();
-  }, [beverageQualityData, form.brand]);
-
   const handleFieldChange = <K extends keyof RunFormState>(key: K, value: RunFormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
-  };
-
-  const handleBrandChange = (brand: string) => {
-    setForm((prev) => ({
-      ...prev,
-      brand,
-      flavour: prev.brand === brand ? prev.flavour : '',
-    }));
-    setErrors((prev) => ({ ...prev, brand: undefined, flavour: undefined }));
   };
 
   const validateForm = () => {
@@ -352,32 +332,23 @@ export function IndexPage() {
 
             <div className="space-y-2">
               <Label htmlFor="brand">Brand *</Label>
-              <Select id="brand" value={form.brand} onChange={(event) => handleBrandChange(event.target.value)}>
-                <option value="">Select brand</option>
-                {brandOptions.map((brand) => (
-                  <option key={brand} value={brand}>
-                    {brand}
-                  </option>
-                ))}
-              </Select>
+              <Input
+                id="brand"
+                value={form.brand}
+                onChange={(event) => handleFieldChange('brand', event.target.value)}
+                placeholder="Enter brand"
+              />
               {renderError('brand')}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="flavour">Flavour *</Label>
-              <Select
+              <Input
                 id="flavour"
                 value={form.flavour}
                 onChange={(event) => handleFieldChange('flavour', event.target.value)}
-                disabled={!form.brand}
-              >
-                <option value="">{form.brand ? 'Select flavour' : 'Select brand first'}</option>
-                {flavourOptions.map((flavour) => (
-                  <option key={flavour} value={flavour}>
-                    {flavour}
-                  </option>
-                ))}
-              </Select>
+                placeholder="Enter flavour"
+              />
               {renderError('flavour')}
             </div>
 
