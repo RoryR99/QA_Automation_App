@@ -1,7 +1,7 @@
 import type { CreateInspectionInput } from '../src/types/app';
-import { getSupabaseServerClient } from './_lib/supabase';
-import { mapInspection } from './_lib/mappers';
-import { readJsonBody, sendError, sendMethodNotAllowed } from './_lib/responses';
+import { getSupabaseServerClient } from './_lib/supabase.js';
+import { mapInspection } from './_lib/mappers.js';
+import { readJsonBody, sendError, sendMethodNotAllowed } from './_lib/responses.js';
 
 export default async function handler(req: { method?: string; body?: unknown }, res: any) {
   const supabase = getSupabaseServerClient();

@@ -7,14 +7,10 @@ type SupabaseEnv = {
 
 function readSupabaseEnv(): SupabaseEnv {
   const url = process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || '';
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
-    process.env.SUPABASE_ANON_KEY?.trim() ||
-    process.env.VITE_SUPABASE_ANON_KEY?.trim() ||
-    '';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || '';
 
   if (!url || !key) {
-    throw new Error('Missing Supabase environment variables.');
+    throw new Error('Missing Supabase server environment variables. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
   }
 
   return { url, key };

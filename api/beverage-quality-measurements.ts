@@ -1,6 +1,6 @@
 import type { BeverageQualityMeasurement } from '../src/types/app';
-import { getSupabaseServerClient } from './_lib/supabase';
-import { sendMethodNotAllowed } from './_lib/responses';
+import { getSupabaseServerClient } from './_lib/supabase.js';
+import { sendMethodNotAllowed } from './_lib/responses.js';
 
 const fallbackBeverageQualityData: BeverageQualityMeasurement[] = [
   {

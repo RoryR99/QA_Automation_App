@@ -1,7 +1,7 @@
 import type { ProductionRun, StartRunInput } from '../src/types/app';
-import { getSupabaseServerClient } from './_lib/supabase';
-import { mapProductionRun } from './_lib/mappers';
-import { readJsonBody, sendError, sendMethodNotAllowed } from './_lib/responses';
+import { getSupabaseServerClient } from './_lib/supabase.js';
+import { mapProductionRun } from './_lib/mappers.js';
+import { readJsonBody, sendError, sendMethodNotAllowed } from './_lib/responses.js';
 
 function buildProductionCode(input: StartRunInput) {
   const stamp = new Date().toISOString().slice(11, 19).replace(/:/g, '');

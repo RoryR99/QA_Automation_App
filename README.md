@@ -33,12 +33,13 @@ api/
 
 Copy the values from [`.env.example`](</C:/Users/rory.rampersad/Downloads/QA AUTO PROJECT/.env.example>) into your Vercel project or local environment.
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` (optional, recommended when writes are protected by RLS)
+- `VITE_SUPABASE_URL`: Supabase project URL exposed to the browser
+- `VITE_SUPABASE_ANON_KEY`: Supabase `anon public` key exposed to the browser
+- `SUPABASE_URL`: Supabase project URL for serverless API routes
+- `SUPABASE_SERVICE_ROLE_KEY`: Supabase `service_role secret` key for serverless API routes only
 - `VITE_API_BASE_URL` (optional override for local development)
+
+Do not create a `VITE_SUPABASE_SERVICE_ROLE_KEY`; any `VITE_` variable is included in the frontend bundle.
 
 Create the required Supabase tables with [supabase/schema.sql](</C:/Users/rory.rampersad/Downloads/QA AUTO PROJECT/supabase/schema.sql>).
 

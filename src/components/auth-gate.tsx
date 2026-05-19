@@ -45,7 +45,7 @@ export function AuthGate({ children }: PropsWithChildren) {
             <CardDescription>Add the Supabase URL and anon key before deploying this QA workflow.</CardDescription>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel, plus server-side Supabase variables for the API routes.
+            Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel. API routes also need server-only `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
           </CardContent>
         </Card>
       </div>

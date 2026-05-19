@@ -1,7 +1,7 @@
 import type { MockUser } from '../src/types/app';
-import { getSupabaseServerClient } from './_lib/supabase';
-import { mapUser } from './_lib/mappers';
-import { sendError, sendMethodNotAllowed } from './_lib/responses';
+import { getSupabaseServerClient } from './_lib/supabase.js';
+import { mapUser } from './_lib/mappers.js';
+import { sendError, sendMethodNotAllowed } from './_lib/responses.js';
 
 const fallbackUser: MockUser = {
   id: 'usr-001',
