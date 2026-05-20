@@ -14,6 +14,9 @@ type PayloadRow = {
 
 type InspectionRow = PayloadRow & {
   inspection_type: InspectionKind;
+  primary_packaging_inspections?: unknown[] | null;
+  secondary_packaging_inspections?: unknown[] | null;
+  product_spec_inspections?: unknown[] | null;
 };
 
 export function mapUser(row: Record<string, unknown>): MockUser {
@@ -51,10 +54,21 @@ function parsePayload<T>(value: unknown): T {
 }
 
 export function mapInspection(row: InspectionRow): InspectionRecord {
-  return {
+  const typedDetails =
+    row.primary_packaging_inspections?.[0] ??
+    row.secondary_packaging_inspections?.[0] ??
+    row.product_spec_inspections?.[0];
+
+  const record: InspectionRecord = {
     id: row.id,
     inspectionType: row.inspection_type,
     createdAt: row.created_at,
     payload: parsePayload<CreateInspectionInput>(row.payload_json),
   };
+
+  if (typedDetails) {
+    record.typedDetails = typedDetails;
+  }
+
+  return record;
 }

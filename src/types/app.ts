@@ -113,4 +113,5 @@ export interface InspectionRecord {
   createdAt: string;
   inspectionType: InspectionKind;
   payload: CreateInspectionInput;
+  typedDetails?: unknown;
 }
