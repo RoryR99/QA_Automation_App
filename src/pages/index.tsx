@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useBeverageQualityMeasurementList } from '@/hooks/use-beverage-quality-measurement-list';
 import { useRecentRuns } from '@/hooks/use-recent-runs';
 import { useUser } from '@/hooks/use-user';
 import { currentProductionRunAtom } from '@/lib/production-run-store';
@@ -122,15 +123,48 @@ export function IndexPage() {
   const setCurrentRun = useSetAtom(currentProductionRunAtom);
   const { data: recentRuns } = useRecentRuns();
   const { data: user } = useUser();
+  const {
+    data: beverageQualityMeasurements,
+    isLoading: isLoadingSpecOptions,
+    isError: isSpecOptionsError,
+  } = useBeverageQualityMeasurementList();
   const [form, setForm] = useState<RunFormState>(buildInitialForm);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const brandOptions = Array.from(new Set((beverageQualityMeasurements ?? []).map((item) => item.brand))).sort((left, right) =>
+    left.localeCompare(right),
+  );
+
+  const flavourOptions = Array.from(
+    new Set(
+      (beverageQualityMeasurements ?? [])
+        .filter((item) => item.brand === form.brand)
+        .map((item) => item.flavor),
+    ),
+  ).sort((left, right) => left.localeCompare(right));
 
   useEffect(() => {
     if (user?.displayName && !form.qatechnician.trim()) {
       setForm((prev) => ({ ...prev, qatechnician: user.displayName }));
     }
   }, [form.qatechnician, user?.displayName]);
+
+  useEffect(() => {
+    if (!form.brand) {
+      return;
+    }
+
+    const brandStillExists = brandOptions.includes(form.brand);
+    if (!brandStillExists) {
+      setForm((prev) => ({ ...prev, brand: '', flavour: '' }));
+      return;
+    }
+
+    if (form.flavour && !flavourOptions.includes(form.flavour)) {
+      setForm((prev) => ({ ...prev, flavour: '' }));
+    }
+  }, [brandOptions, flavourOptions, form.brand, form.flavour]);
 
   const handleFieldChange = <K extends keyof RunFormState>(key: K, value: RunFormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -332,23 +366,48 @@ export function IndexPage() {
 
             <div className="space-y-2">
               <Label htmlFor="brand">Brand *</Label>
-              <Input
+              <Select
                 id="brand"
                 value={form.brand}
                 onChange={(event) => handleFieldChange('brand', event.target.value)}
-                placeholder="Enter brand"
-              />
+                disabled={isLoadingSpecOptions || brandOptions.length === 0}
+              >
+                <option value="">
+                  {isLoadingSpecOptions ? 'Loading brands...' : brandOptions.length === 0 ? 'No brands available' : 'Select brand'}
+                </option>
+                {brandOptions.map((brand) => (
+                  <option key={brand} value={brand}>
+                    {brand}
+                  </option>
+                ))}
+              </Select>
+              {isSpecOptionsError ? <p className="text-sm text-destructive">Unable to load brand options from beverage quality specs.</p> : null}
               {renderError('brand')}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="flavour">Flavour *</Label>
-              <Input
+              <Select
                 id="flavour"
                 value={form.flavour}
                 onChange={(event) => handleFieldChange('flavour', event.target.value)}
-                placeholder="Enter flavour"
-              />
+                disabled={!form.brand || isLoadingSpecOptions || flavourOptions.length === 0}
+              >
+                <option value="">
+                  {!form.brand
+                    ? 'Select brand first'
+                    : isLoadingSpecOptions
+                      ? 'Loading flavours...'
+                      : flavourOptions.length === 0
+                        ? 'No flavours available'
+                        : 'Select flavour'}
+                </option>
+                {flavourOptions.map((flavour) => (
+                  <option key={flavour} value={flavour}>
+                    {flavour}
+                  </option>
+                ))}
+              </Select>
               {renderError('flavour')}
             </div>
 
