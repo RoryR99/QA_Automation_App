@@ -5,8 +5,8 @@ import { sendError, sendMethodNotAllowed } from './_lib/responses.js';
 
 const fallbackUser: MockUser = {
   id: 'usr-001',
-  displayName: 'Jamie Alvarez',
-  userPrincipalName: 'jamie.alvarez@plant-demo.local',
+  displayName: 'SMJ QA Officer',
+  userPrincipalName: 'SMJ QA Officer@plant-demo.local',
   role: 'Quality Technician',
   site: 'Bottling Line A',
 };
