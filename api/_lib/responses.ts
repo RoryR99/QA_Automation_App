@@ -17,7 +17,13 @@ export function sendMethodNotAllowed(req: ApiRequest, res: ApiResponse, allowedM
 }
 
 export function sendError(res: ApiResponse, error: unknown, fallbackMessage = 'Request failed') {
-  const message = error instanceof Error ? error.message : fallbackMessage;
+  const message =
+    error instanceof Error
+      ? error.message
+      : error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
+        ? error.message
+        : fallbackMessage;
+
   return res.status(500).json({ message });
 }
 

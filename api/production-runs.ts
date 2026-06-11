@@ -3,9 +3,53 @@ import { getSupabaseServerClient } from './_lib/supabase.js';
 import { mapProductionRun } from './_lib/mappers.js';
 import { readJsonBody, sendError, sendMethodNotAllowed } from './_lib/responses.js';
 
+type SupabaseClient = ReturnType<typeof getSupabaseServerClient>;
+type ProductionRunRow = Record<string, unknown>;
+type ProductionRunBatchRow = Record<string, unknown>;
+
 function buildProductionCode(input: StartRunInput) {
   const stamp = new Date().toISOString().slice(11, 19).replace(/:/g, '');
   return `${input.brand.slice(0, 3).toUpperCase()}-${input.flavour.slice(0, 3).toUpperCase()}-${stamp}`;
+}
+
+async function attachBatchRows(supabase: SupabaseClient, runs: ProductionRunRow[]) {
+  if (runs.length === 0) {
+    return runs;
+  }
+
+  const runIds = runs.map((run) => String(run.id));
+  const { data, error } = await supabase
+    .from('production_run_batches')
+    .select('*')
+    .in('production_run_id', runIds)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    return runs;
+  }
+
+  const batchesByRunId = new Map<string, ProductionRunBatchRow[]>();
+
+  for (const batch of data ?? []) {
+    const runId = String(batch.production_run_id);
+    batchesByRunId.set(runId, [...(batchesByRunId.get(runId) ?? []), batch]);
+  }
+
+  return runs.map((run) => ({
+    ...run,
+    production_run_batches: batchesByRunId.get(String(run.id)) ?? [],
+  }));
+}
+
+async function selectRunWithBatches(supabase: SupabaseClient, id: string) {
+  const { data, error } = await supabase.from('production_runs').select('*').eq('id', id).single();
+
+  if (error) {
+    throw error;
+  }
+
+  const [run] = await attachBatchRows(supabase, [data]);
+  return run;
 }
 
 export default async function handler(req: { method?: string; body?: unknown }, res: any) {
@@ -13,16 +57,14 @@ export default async function handler(req: { method?: string; body?: unknown }, 
 
   try {
     if (req.method === 'GET') {
-      const { data, error } = await supabase
-        .from('production_runs')
-        .select('*, production_run_batches (*)')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('production_runs').select('*').order('created_at', { ascending: false });
 
       if (error) {
         throw error;
       }
 
-      return res.status(200).json((data ?? []).map(mapProductionRun));
+      const runsWithBatches = await attachBatchRows(supabase, data ?? []);
+      return res.status(200).json(runsWithBatches.map(mapProductionRun));
     }
 
     if (req.method === 'POST') {
@@ -41,7 +83,6 @@ export default async function handler(req: { method?: string; body?: unknown }, 
         line: input.line,
         shift: input.shift,
         payload_json: input,
-        status: 'active',
         created_at: new Date().toISOString(),
       };
 
@@ -65,14 +106,15 @@ export default async function handler(req: { method?: string; body?: unknown }, 
         .from('production_runs')
         .update({ status: 'closed', closed_at: new Date().toISOString() })
         .eq('id', input.id)
-        .select('*, production_run_batches (*)')
+        .select('*')
         .single();
 
       if (error) {
         throw error;
       }
 
-      return res.status(200).json(mapProductionRun(data));
+      const runWithBatches = await selectRunWithBatches(supabase, String(data.id));
+      return res.status(200).json(mapProductionRun(runWithBatches));
     }
 
     return sendMethodNotAllowed(req, res, ['GET', 'POST', 'PATCH']);

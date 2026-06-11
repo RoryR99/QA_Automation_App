@@ -16,31 +16,8 @@ create table if not exists public.production_runs (
   package_type text not null,
   line text not null,
   shift text not null,
-  status text not null default 'active',
-  closed_at timestamptz,
   payload_json jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default timezone('utc', now()),
-  constraint production_runs_status_check
-    check (status in ('active', 'closed')),
-  constraint production_runs_closed_at_check
-    check ((status = 'active' and closed_at is null) or (status = 'closed' and closed_at is not null))
-);
-
-alter table public.production_runs
-  add column if not exists status text not null default 'active';
-
-alter table public.production_runs
-  add column if not exists closed_at timestamptz;
-
-create table if not exists public.production_run_batches (
-  id text primary key,
-  production_run_id text not null references public.production_runs(id) on delete cascade,
-  batch_number text not null,
-  created_at timestamptz not null default timezone('utc', now()),
-  constraint production_run_batches_number_not_blank
-    check (length(trim(batch_number)) > 0),
-  constraint production_run_batches_unique
-    unique (production_run_id, batch_number)
+  created_at timestamptz not null default timezone('utc', now())
 );
 
 create table if not exists public.hourly_inspections (
@@ -117,6 +94,41 @@ create table if not exists public.secondary_packaging_inspections (
     check (non_conformance_status is null or non_conformance_status in ('completed', 'not-completed'))
 );
 
+create table if not exists public.product_spec_inspections (
+  inspection_id text primary key references public.hourly_inspections(id) on delete cascade,
+  beverage_quality_measurement_id text references public.beverage_quality_measurements(beveragequalitymeasurementid),
+  brand text not null,
+  flavor text not null,
+  package_size_ml numeric,
+  fillheight numeric,
+  brix numeric,
+  co2_pressure numeric,
+  co2_temperature numeric,
+  co2_volume numeric,
+  ph numeric,
+  titratable_acidity numeric,
+  vitamin_c numeric,
+  closure_supplier text,
+  net_completed boolean not null default false,
+  cp_and_cpk_completed boolean not null default false,
+  cip_completed boolean not null default false,
+  cip_method text,
+  cop_completed boolean not null default false,
+  cop_chemical text,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.product_spec_closure_measurements (
+  id text primary key,
+  inspection_id text not null references public.product_spec_inspections(inspection_id) on delete cascade,
+  measurement_number integer not null,
+  application_angle numeric,
+  removal_torque numeric,
+  created_at timestamptz not null default timezone('utc', now()),
+  constraint product_spec_closure_measurements_number_uniq
+    unique (inspection_id, measurement_number)
+);
+
 create table if not exists public.beverage_quality_measurements (
   beveragequalitymeasurementid text primary key,
   brand text not null,
@@ -168,46 +180,8 @@ create table if not exists public.beverage_quality_measurements (
   vitamincupperlimit numeric
 );
 
-create table if not exists public.product_spec_inspections (
-  inspection_id text primary key references public.hourly_inspections(id) on delete cascade,
-  beverage_quality_measurement_id text references public.beverage_quality_measurements(beveragequalitymeasurementid),
-  brand text not null,
-  flavor text not null,
-  package_size_ml numeric,
-  fillheight numeric,
-  brix numeric,
-  co2_pressure numeric,
-  co2_temperature numeric,
-  co2_volume numeric,
-  ph numeric,
-  titratable_acidity numeric,
-  vitamin_c numeric,
-  closure_supplier text,
-  net_completed boolean not null default false,
-  cp_and_cpk_completed boolean not null default false,
-  cip_completed boolean not null default false,
-  cip_method text,
-  cop_completed boolean not null default false,
-  cop_chemical text,
-  created_at timestamptz not null default timezone('utc', now())
-);
-
-create table if not exists public.product_spec_closure_measurements (
-  id text primary key,
-  inspection_id text not null references public.product_spec_inspections(inspection_id) on delete cascade,
-  measurement_number integer not null,
-  application_angle numeric,
-  removal_torque numeric,
-  created_at timestamptz not null default timezone('utc', now()),
-  constraint product_spec_closure_measurements_number_uniq
-    unique (inspection_id, measurement_number)
-);
-
 create index if not exists idx_hourly_inspections_production_run_id
   on public.hourly_inspections (production_run_id, created_at desc);
-
-create index if not exists idx_production_run_batches_production_run_id
-  on public.production_run_batches (production_run_id, created_at);
 
 create index if not exists idx_beverage_quality_measurements_lookup
   on public.beverage_quality_measurements (brand, flavor, packagesizeml);

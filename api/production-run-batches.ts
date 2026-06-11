@@ -31,11 +31,7 @@ export default async function handler(req: { method?: string; body?: unknown }, 
       return res.status(400).json({ message: 'Production run id and at least one batch number are required.' });
     }
 
-    const { data: run, error: runError } = await supabase
-      .from('production_runs')
-      .select('id, status')
-      .eq('id', input.productionRunId)
-      .single();
+    const { data: run, error: runError } = await supabase.from('production_runs').select('*').eq('id', input.productionRunId).single();
 
     if (runError) {
       throw runError;
@@ -54,8 +50,7 @@ export default async function handler(req: { method?: string; body?: unknown }, 
     const { data, error } = await supabase
       .from('production_run_batches')
       .upsert(rows, { onConflict: 'production_run_id,batch_number', ignoreDuplicates: true })
-      .select()
-      .order('created_at', { ascending: true });
+      .select();
 
     if (error) {
       throw error;
