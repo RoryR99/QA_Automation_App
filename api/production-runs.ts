@@ -13,7 +13,10 @@ export default async function handler(req: { method?: string; body?: unknown }, 
 
   try {
     if (req.method === 'GET') {
-      const { data, error } = await supabase.from('production_runs').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('production_runs')
+        .select('*, production_run_batches (*)')
+        .order('created_at', { ascending: false });
 
       if (error) {
         throw error;
@@ -38,6 +41,7 @@ export default async function handler(req: { method?: string; body?: unknown }, 
         line: input.line,
         shift: input.shift,
         payload_json: input,
+        status: 'active',
         created_at: new Date().toISOString(),
       };
 
@@ -50,7 +54,28 @@ export default async function handler(req: { method?: string; body?: unknown }, 
       return res.status(201).json(mapProductionRun(data));
     }
 
-    return sendMethodNotAllowed(req, res, ['GET', 'POST']);
+    if (req.method === 'PATCH') {
+      const input = await readJsonBody<{ id?: string; status?: 'active' | 'closed' }>(req);
+
+      if (!input.id || input.status !== 'closed') {
+        return res.status(400).json({ message: 'Production run id and closed status are required.' });
+      }
+
+      const { data, error } = await supabase
+        .from('production_runs')
+        .update({ status: 'closed', closed_at: new Date().toISOString() })
+        .eq('id', input.id)
+        .select('*, production_run_batches (*)')
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return res.status(200).json(mapProductionRun(data));
+    }
+
+    return sendMethodNotAllowed(req, res, ['GET', 'POST', 'PATCH']);
   } catch (error) {
     return sendError(res, error);
   }

@@ -16,8 +16,31 @@ create table if not exists public.production_runs (
   package_type text not null,
   line text not null,
   shift text not null,
+  status text not null default 'active',
+  closed_at timestamptz,
   payload_json jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default timezone('utc', now())
+  created_at timestamptz not null default timezone('utc', now()),
+  constraint production_runs_status_check
+    check (status in ('active', 'closed')),
+  constraint production_runs_closed_at_check
+    check ((status = 'active' and closed_at is null) or (status = 'closed' and closed_at is not null))
+);
+
+alter table public.production_runs
+  add column if not exists status text not null default 'active';
+
+alter table public.production_runs
+  add column if not exists closed_at timestamptz;
+
+create table if not exists public.production_run_batches (
+  id text primary key,
+  production_run_id text not null references public.production_runs(id) on delete cascade,
+  batch_number text not null,
+  created_at timestamptz not null default timezone('utc', now()),
+  constraint production_run_batches_number_not_blank
+    check (length(trim(batch_number)) > 0),
+  constraint production_run_batches_unique
+    unique (production_run_id, batch_number)
 );
 
 create table if not exists public.hourly_inspections (
@@ -182,6 +205,9 @@ create table if not exists public.beverage_quality_measurements (
 
 create index if not exists idx_hourly_inspections_production_run_id
   on public.hourly_inspections (production_run_id, created_at desc);
+
+create index if not exists idx_production_run_batches_production_run_id
+  on public.production_run_batches (production_run_id, created_at);
 
 create index if not exists idx_beverage_quality_measurements_lookup
   on public.beverage_quality_measurements (brand, flavor, packagesizeml);

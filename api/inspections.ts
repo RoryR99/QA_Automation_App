@@ -245,6 +245,20 @@ export default async function handler(req: { method?: string; body?: unknown }, 
         return res.status(400).json({ message: 'Missing required inspection fields.' });
       }
 
+      const { data: run, error: runError } = await supabase
+        .from('production_runs')
+        .select('id, status')
+        .eq('id', input.productionrunid.id)
+        .single();
+
+      if (runError) {
+        throw runError;
+      }
+
+      if (run.status === 'closed') {
+        return res.status(400).json({ message: 'This production run is closed. No new checks can be added.' });
+      }
+
       const inspectionId = crypto.randomUUID();
       const row = {
         id: inspectionId,

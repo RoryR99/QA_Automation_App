@@ -8,7 +8,15 @@ export interface MockUser {
   site: string;
 }
 
-export type ProductionRunShiftKey = 'Shiftkey0' | 'Shiftkey1';
+export type ProductionRunShiftKey = 'Shiftkey0' | 'Shiftkey1' | 'Shiftkey2';
+export type ProductionRunStatus = 'active' | 'closed';
+
+export interface ProductionRunBatch {
+  id: string;
+  productionRunId: string;
+  batchNumber: string;
+  createdAt: string;
+}
 
 export interface ProductionRun {
   id: string;
@@ -19,6 +27,9 @@ export interface ProductionRun {
   line: string;
   shift: string;
   createdAt: string;
+  status?: ProductionRunStatus;
+  closedAt?: string;
+  batchNumbers?: ProductionRunBatch[];
   mfgDate?: string;
   bbdate?: string;
   linenumber?: string;

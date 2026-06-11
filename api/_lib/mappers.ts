@@ -3,7 +3,9 @@ import type {
   InspectionKind,
   InspectionRecord,
   MockUser,
+  ProductionRunBatch,
   ProductionRun,
+  ProductionRunStatus,
 } from '../../src/types/app';
 
 type PayloadRow = {
@@ -31,6 +33,7 @@ export function mapUser(row: Record<string, unknown>): MockUser {
 
 export function mapProductionRun(row: Record<string, unknown>): ProductionRun {
   const payload = parsePayload<Partial<ProductionRun>>(row.payload_json ?? {});
+  const batchRows = Array.isArray(row.production_run_batches) ? row.production_run_batches : [];
 
   return {
     ...payload,
@@ -41,6 +44,18 @@ export function mapProductionRun(row: Record<string, unknown>): ProductionRun {
     packageType: String(row.package_type ?? ''),
     line: String(row.line ?? ''),
     shift: String(row.shift ?? ''),
+    createdAt: String(row.created_at ?? ''),
+    status: (row.status === 'closed' ? 'closed' : 'active') satisfies ProductionRunStatus,
+    closedAt: typeof row.closed_at === 'string' ? row.closed_at : undefined,
+    batchNumbers: batchRows.map((batch) => mapProductionRunBatch(batch as Record<string, unknown>)),
+  };
+}
+
+export function mapProductionRunBatch(row: Record<string, unknown>): ProductionRunBatch {
+  return {
+    id: String(row.id ?? ''),
+    productionRunId: String(row.production_run_id ?? ''),
+    batchNumber: String(row.batch_number ?? ''),
     createdAt: String(row.created_at ?? ''),
   };
 }

@@ -1,15 +1,20 @@
-import { useMemo } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { motion } from 'motion/react';
-import { CheckCircle2, Clock3, History, PackagePlus, PlayCircle, TriangleAlert } from 'lucide-react';
+import { CheckCircle2, Clock3, History, Lock, PackagePlus, PlayCircle, Plus, Save, Tags, TriangleAlert, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useInspectionHistory } from '@/hooks/use-inspection-history';
 import { useRecentRuns } from '@/hooks/use-recent-runs';
 import { currentProductionRunAtom } from '@/lib/production-run-store';
-import type { CreateInspectionInput, InspectionRecord, ProductionRun } from '@/types/app';
+import { addProductionRunBatchNumbers, closeProductionRun } from '@/services/production-service';
+import type { CreateInspectionInput, InspectionRecord, ProductionRun, ProductionRunBatch } from '@/types/app';
 
 const hiddenPayloadKeys = new Set([
   'hourlyinspectionname',
@@ -164,6 +169,10 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function isRunClosed(run: ProductionRun) {
+  return run.status === 'closed';
+}
+
 function PhotoRow({ label, src }: { label: string; src: string }) {
   return (
     <div className="rounded-2xl bg-secondary/35 px-4 py-3 text-sm">
@@ -180,16 +189,128 @@ export function HistoryPage() {
   const navigate = useNavigate();
   const currentRun = useAtomValue(currentProductionRunAtom);
   const setCurrentRun = useSetAtom(currentProductionRunAtom);
+  const queryClient = useQueryClient();
   const { data: history, isLoading: historyLoading } = useInspectionHistory();
   const { data: runs, isLoading: runsLoading } = useRecentRuns();
+  const [batchEditors, setBatchEditors] = useState<Record<string, string[]>>({});
+  const [expandedBatchRunId, setExpandedBatchRunId] = useState<string | null>(null);
 
   const isLoading = historyLoading || runsLoading;
 
   const runsById = useMemo(() => new Map((runs ?? []).map((run) => [run.id, run])), [runs]);
 
   const resumeRun = (run: ProductionRun) => {
+    if (isRunClosed(run)) {
+      toast.error('This production run is closed. No new checks can be added.');
+      return;
+    }
+
     setCurrentRun(run);
     navigate('/primary-packaging');
+  };
+
+  const closeRun = useMutation({
+    mutationFn: closeProductionRun,
+    onSuccess: (closedRun) => {
+      queryClient.setQueryData<ProductionRun[]>(['recent-runs'], (existing) =>
+        (existing ?? []).map((run) => (run.id === closedRun.id ? closedRun : run)),
+      );
+
+      if (currentRun?.id === closedRun.id) {
+        setCurrentRun(null);
+      }
+
+      toast.success('Production run closed');
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Unable to close production run');
+    },
+  });
+
+  const addBatchNumbers = useMutation({
+    mutationFn: ({ productionRunId, batchNumbers }: { productionRunId: string; batchNumbers: string[] }) =>
+      addProductionRunBatchNumbers(productionRunId, batchNumbers),
+    onSuccess: (createdBatches, variables) => {
+      queryClient.setQueryData<ProductionRun[]>(['recent-runs'], (existing) =>
+        (existing ?? []).map((run) => {
+          if (run.id !== variables.productionRunId) {
+            return run;
+          }
+
+          const existingBatches = run.batchNumbers ?? [];
+          const knownBatchNumbers = new Set(existingBatches.map((batch) => batch.batchNumber));
+          const newBatches = createdBatches.filter((batch) => !knownBatchNumbers.has(batch.batchNumber));
+
+          return {
+            ...run,
+            batchNumbers: [...existingBatches, ...newBatches],
+          };
+        }),
+      );
+      setBatchEditors((prev) => ({ ...prev, [variables.productionRunId]: [''] }));
+      toast.success('Batch numbers added');
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Unable to add batch numbers');
+    },
+  });
+
+  const toggleBatchEditor = (run: ProductionRun) => {
+    setExpandedBatchRunId((current) => (current === run.id ? null : run.id));
+    setBatchEditors((prev) => ({
+      ...prev,
+      [run.id]: prev[run.id] ?? [''],
+    }));
+  };
+
+  const updateBatchEditorValue = (runId: string, index: number, value: string) => {
+    setBatchEditors((prev) => ({
+      ...prev,
+      [runId]: (prev[runId] ?? ['']).map((item, itemIndex) => (itemIndex === index ? value : item)),
+    }));
+  };
+
+  const addBatchEditorRow = (runId: string) => {
+    setBatchEditors((prev) => ({
+      ...prev,
+      [runId]: [...(prev[runId] ?? ['']), ''],
+    }));
+  };
+
+  const removeBatchEditorRow = (runId: string, index: number) => {
+    setBatchEditors((prev) => {
+      const nextValues = (prev[runId] ?? ['']).filter((_, itemIndex) => itemIndex !== index);
+
+      return {
+        ...prev,
+        [runId]: nextValues.length > 0 ? nextValues : [''],
+      };
+    });
+  };
+
+  const submitBatchNumbers = (event: FormEvent<HTMLFormElement>, run: ProductionRun) => {
+    event.preventDefault();
+
+    if (isRunClosed(run)) {
+      toast.error('Batch numbers cannot be added to a closed production run.');
+      return;
+    }
+
+    const existingBatchNumbers = new Set((run.batchNumbers ?? []).map((batch) => batch.batchNumber.toLowerCase()));
+    const batchNumbers = Array.from(
+      new Set(
+        (batchEditors[run.id] ?? [])
+          .map((value) => value.trim())
+          .filter((value) => value && !existingBatchNumbers.has(value.toLowerCase())),
+      ),
+    );
+
+    if (batchNumbers.length === 0) {
+      toast.error('Enter at least one new batch number.');
+      return;
+    }
+
+    addBatchNumbers.mutate({ productionRunId: run.id, batchNumbers });
   };
 
   const findClosureMeasurements = (inspection: InspectionRecord) => {
@@ -235,6 +356,9 @@ export function HistoryPage() {
           ) : runs && runs.length > 0 ? (
             runs.map((run, index) => {
               const isActive = currentRun?.id === run.id;
+              const closed = isRunClosed(run);
+              const batchValues = batchEditors[run.id] ?? [''];
+              const existingBatches = run.batchNumbers ?? [];
 
               return (
                 <motion.div
@@ -254,20 +378,101 @@ export function HistoryPage() {
                       <p className="text-sm text-muted-foreground">
                         Line {run.line} | {run.shift} | Created {new Date(run.createdAt).toLocaleString()}
                       </p>
+                      {closed && run.closedAt ? (
+                        <p className="text-sm font-medium text-muted-foreground">Closed {new Date(run.closedAt).toLocaleString()}</p>
+                      ) : null}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3 md:justify-end">
                       {isActive && (
                         <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
                           <CheckCircle2 className="h-4 w-4" />
                           Active
                         </span>
                       )}
-                      <Button onClick={() => resumeRun(run)}>
+                      {closed ? (
+                        <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-sm font-medium text-secondary-foreground">
+                          <Lock className="h-4 w-4" />
+                          Closed
+                        </span>
+                      ) : null}
+                      <Button variant="outline" onClick={() => toggleBatchEditor(run)}>
+                        <Tags className="h-4 w-4" />
+                        Batch numbers
+                      </Button>
+                      {!closed ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => closeRun.mutate(run.id)}
+                          disabled={closeRun.isPending}
+                        >
+                          <Lock className="h-4 w-4" />
+                          Close run
+                        </Button>
+                      ) : null}
+                      <Button onClick={() => resumeRun(run)} disabled={closed}>
                         <PlayCircle className="h-4 w-4" />
                         Add new checks
                       </Button>
                     </div>
                   </div>
+
+                  {(existingBatches.length > 0 || expandedBatchRunId === run.id) && (
+                    <div className="mt-5 space-y-4 rounded-2xl border border-border/70 bg-secondary/20 p-4">
+                      <div>
+                        <div className="mb-2 text-sm font-semibold text-foreground">Batch numbers</div>
+                        {existingBatches.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {existingBatches.map((batch: ProductionRunBatch) => (
+                              <span
+                                key={batch.id}
+                                className="rounded-full bg-white/90 px-3 py-1 text-sm font-medium text-foreground shadow-sm"
+                              >
+                                {batch.batchNumber}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No batch numbers have been added yet.</p>
+                        )}
+                      </div>
+
+                      {expandedBatchRunId === run.id && !closed ? (
+                        <form onSubmit={(event) => submitBatchNumbers(event, run)} className="space-y-3">
+                          <Label>New batch numbers</Label>
+                          <div className="grid gap-3 md:grid-cols-2">
+                            {batchValues.map((value, batchIndex) => (
+                              <div key={`${run.id}-batch-${batchIndex}`} className="flex gap-2">
+                                <Input
+                                  value={value}
+                                  onChange={(event) => updateBatchEditorValue(run.id, batchIndex, event.target.value)}
+                                  placeholder={`Batch number ${batchIndex + 1}`}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeBatchEditorRow(run.id, batchIndex)}
+                                  aria-label="Remove batch number"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            <Button type="button" variant="outline" onClick={() => addBatchEditorRow(run.id)}>
+                              <Plus className="h-4 w-4" />
+                              Add another
+                            </Button>
+                            <Button type="submit" disabled={addBatchNumbers.isPending}>
+                              <Save className="h-4 w-4" />
+                              Save batches
+                            </Button>
+                          </div>
+                        </form>
+                      ) : null}
+                    </div>
+                  )}
                 </motion.div>
               );
             })

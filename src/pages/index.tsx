@@ -23,6 +23,7 @@ import type { ProductionRun, ProductionRunShiftKey, StartRunInput } from '@/type
 const shiftOptions: Array<{ key: ProductionRunShiftKey; label: string }> = [
   { key: 'Shiftkey0', label: 'Shift A' },
   { key: 'Shiftkey1', label: 'Shift B' },
+  { key: 'Shiftkey2', label: 'Shift C' },
 ];
 
 interface RunFormState {
@@ -538,16 +539,6 @@ export function IndexPage() {
                   value={form.epicorsyrup}
                   onChange={(event) => handleFieldChange('epicorsyrup', event.target.value)}
                   placeholder="Enter syrup number"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="planner">Planner</Label>
-                <Input
-                  id="planner"
-                  value={form.planner}
-                  onChange={(event) => handleFieldChange('planner', event.target.value)}
-                  placeholder="Enter planner name"
                 />
               </div>
 
