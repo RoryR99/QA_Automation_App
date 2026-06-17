@@ -214,3 +214,18 @@ create index if not exists idx_beverage_quality_measurements_lookup
 
 create index if not exists idx_product_spec_inspections_lookup
   on public.product_spec_inspections (brand, flavor, package_size_ml);
+
+grant usage on schema public to service_role;
+
+grant all privileges on table public.users to service_role;
+grant all privileges on table public.production_runs to service_role;
+grant all privileges on table public.production_run_batches to service_role;
+grant all privileges on table public.hourly_inspections to service_role;
+grant all privileges on table public.primary_packaging_inspections to service_role;
+grant all privileges on table public.secondary_packaging_inspections to service_role;
+grant all privileges on table public.product_spec_inspections to service_role;
+grant all privileges on table public.product_spec_closure_measurements to service_role;
+grant all privileges on table public.beverage_quality_measurements to service_role;
+
+alter default privileges in schema public
+  grant all privileges on tables to service_role;
