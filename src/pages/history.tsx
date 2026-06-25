@@ -61,9 +61,10 @@ const fieldLabelOverrides: Record<string, string> = {
   brand: 'Brand',
   flavor: 'Flavor',
   packsize: 'Pack Size',
+  warmertemperature: 'Warmer Temperature',
   fillheight: 'Fill Height',
   brix: 'Brix',
-  co2pressure: 'CO2 Pressure',
+  co2pressure: 'Pressure',
   co2temperature: 'CO2 Temperature',
   co2: 'CO2 Volume',
   ph: 'pH',
@@ -119,6 +120,10 @@ function formatPayloadValue(key: string, value: unknown) {
 
     if (value.endsWith('1')) {
       return 'Non-acceptable';
+    }
+
+    if (value.endsWith('2')) {
+      return 'N/A';
     }
   }
 

@@ -211,7 +211,7 @@ create table if not exists public.secondary_packaging_inspections (
   pallet_tags_status public.acceptability_status not null,
   pallet_tag_info text,
   pallet_tag_photo_url text,
-  stickers_status public.acceptability_status not null,
+  stickers_status text not null,
   sticker_info text,
   sticker_photo_url text,
   containment_force_top_kg numeric,
@@ -219,7 +219,9 @@ create table if not exists public.secondary_packaging_inspections (
   containment_force_bottom_kg numeric,
   non_conformance_status public.completion_status,
   non_conformance_photo_url text,
-  observations text
+  observations text,
+  constraint secondary_packaging_stickers_check
+    check (stickers_status in ('acceptable', 'non-acceptable', 'not-applicable'))
 );
 
 create table if not exists public.product_spec_inspections (
@@ -229,6 +231,7 @@ create table if not exists public.product_spec_inspections (
   brand text not null,
   flavor text not null,
   package_size_ml numeric,
+  warmer_temperature numeric,
   fillheight numeric,
   brix numeric,
   co2_pressure numeric,

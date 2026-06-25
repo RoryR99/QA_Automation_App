@@ -80,7 +80,12 @@ export function SecondaryPackagingPage() {
         pallettagsKey: formData.palletTags === 'acceptable' ? 'Pallettagskey0' : 'Pallettagskey1',
         pallettaginfo: formData.palletTagInfo || undefined,
         pallettagphotourl: formData.palletTagPhotoUrl || undefined,
-        stickersKey: formData.stickers === 'acceptable' ? 'Stickerskey0' : 'Stickerskey1',
+        stickersKey:
+          formData.stickers === 'acceptable'
+            ? 'Stickerskey0'
+            : formData.stickers === 'not-applicable'
+              ? 'Stickerskey2'
+              : 'Stickerskey1',
         stickerinfo: formData.stickerInfo || undefined,
         stickerphotourl: formData.stickerPhotoUrl || undefined,
         containmentforcetopkg: formData.containmentForceTop,
@@ -214,6 +219,7 @@ export function SecondaryPackagingPage() {
                 <InspectionButton
                   value={formData.stickers}
                   onChange={(value) => setFormData((prev) => ({ ...prev, stickers: value }))}
+                  allowNotApplicable
                 />
                 <div className="mt-3">
                   <Label className="text-sm text-muted-foreground">Sticker Info</Label>

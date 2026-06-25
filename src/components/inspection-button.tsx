@@ -1,4 +1,4 @@
-import { CheckCircle2, OctagonAlert } from 'lucide-react';
+import { CheckCircle2, MinusCircle, OctagonAlert } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -7,11 +7,12 @@ import type { InspectionValue } from '@/types/app';
 interface InspectionButtonProps {
   value?: InspectionValue;
   onChange: (value: InspectionValue) => void;
+  allowNotApplicable?: boolean;
 }
 
-export function InspectionButton({ value, onChange }: InspectionButtonProps) {
+export function InspectionButton({ value, onChange, allowNotApplicable = false }: InspectionButtonProps) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className={cn('grid gap-3', allowNotApplicable ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
       <Button
         type="button"
         variant={value === 'acceptable' ? 'default' : 'outline'}
@@ -33,6 +34,17 @@ export function InspectionButton({ value, onChange }: InspectionButtonProps) {
         <OctagonAlert className="h-5 w-5" />
         Non-acceptable
       </Button>
+      {allowNotApplicable && (
+        <Button
+          type="button"
+          variant={value === 'not-applicable' ? 'secondary' : 'outline'}
+          className="h-14 justify-start rounded-2xl border px-4 text-left"
+          onClick={() => onChange('not-applicable')}
+        >
+          <MinusCircle className="h-5 w-5" />
+          N/A
+        </Button>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-export type InspectionValue = 'acceptable' | 'non-acceptable';
+export type InspectionValue = 'acceptable' | 'non-acceptable' | 'not-applicable';
 
 export interface MockUser {
   id: string;

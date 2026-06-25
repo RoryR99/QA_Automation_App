@@ -33,9 +33,10 @@ interface ClosureMeasurement {
 }
 
 const defaultSpecFields: SpecField[] = [
+  { key: 'warmertemperature', label: 'Warmer Temperature', unit: 'deg F' },
   { key: 'fillheight', label: 'Fill Height', unit: 'mm' },
   { key: 'brix', label: 'Brix', unit: 'deg Bx' },
-  { key: 'co2pressure', label: 'CO2 Pressure', unit: 'psi' },
+  { key: 'co2pressure', label: 'Pressure', unit: 'psi' },
   { key: 'co2temperature', label: 'CO2 Temperature', unit: 'deg F' },
   { key: 'co2final', label: 'CO2 Volume', unit: 'vol' },
   { key: 'ph', label: 'pH', unit: '' },
@@ -310,6 +311,7 @@ export function ProductSpecsPage() {
         brand: selectedBrand,
         flavor: selectedFlavor,
         packsize: selectedPackSize || undefined,
+        warmertemperature: specFields.find((field) => field.key === 'warmertemperature')?.value,
         fillheight: specFields.find((field) => field.key === 'fillheight')?.value,
         brix: specFields.find((field) => field.key === 'brix')?.value,
         co2pressure: specFields.find((field) => field.key === 'co2pressure')?.value,

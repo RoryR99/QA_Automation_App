@@ -128,10 +128,17 @@ create table if not exists public.secondary_packaging_inspections (
   constraint secondary_packaging_pallet_tags_check
     check (pallet_tags_status in ('acceptable', 'non-acceptable')),
   constraint secondary_packaging_stickers_check
-    check (stickers_status in ('acceptable', 'non-acceptable')),
+    check (stickers_status in ('acceptable', 'non-acceptable', 'not-applicable')),
   constraint secondary_packaging_non_conformance_check
     check (non_conformance_status is null or non_conformance_status in ('completed', 'not-completed'))
 );
+
+alter table public.secondary_packaging_inspections
+  drop constraint if exists secondary_packaging_stickers_check;
+
+alter table public.secondary_packaging_inspections
+  add constraint secondary_packaging_stickers_check
+    check (stickers_status in ('acceptable', 'non-acceptable', 'not-applicable'));
 
 create table if not exists public.beverage_quality_measurements (
   beveragequalitymeasurementid text primary key,
@@ -190,6 +197,7 @@ create table if not exists public.product_spec_inspections (
   brand text not null,
   flavor text not null,
   package_size_ml numeric,
+  warmer_temperature numeric,
   fillheight numeric,
   brix numeric,
   co2_pressure numeric,
@@ -203,6 +211,9 @@ create table if not exists public.product_spec_inspections (
   cp_and_cpk_completed boolean not null default false,
   created_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.product_spec_inspections
+  add column if not exists warmer_temperature numeric;
 
 create table if not exists public.product_spec_closure_measurements (
   id text primary key,

@@ -18,6 +18,10 @@ function statusFromKey(value: unknown) {
     return 'non-acceptable';
   }
 
+  if (value.endsWith('2')) {
+    return 'not-applicable';
+  }
+
   return undefined;
 }
 
@@ -153,6 +157,7 @@ async function insertProductSpecInspection(
     brand,
     flavor,
     package_size_ml: optionalNumber(input.packsize),
+    warmer_temperature: optionalNumber(input.warmertemperature),
     fillheight: optionalNumber(input.fillheight),
     brix: optionalNumber(input.brix),
     co2_pressure: optionalNumber(input.co2pressure),
