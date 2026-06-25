@@ -164,10 +164,6 @@ async function insertProductSpecInspection(
     closure_supplier: optionalString(input.closuresupplier),
     net_completed: optionalBoolean(input.netcompletion) ?? false,
     cp_and_cpk_completed: optionalBoolean(input.cpandcpkcompletion) ?? false,
-    cip_completed: optionalBoolean(input.cipcompletion) ?? false,
-    cip_method: optionalString(input.cipmethod),
-    cop_completed: optionalBoolean(input.copcompletion) ?? false,
-    cop_chemical: optionalString(input.copchemical),
   });
 
   if (error) {

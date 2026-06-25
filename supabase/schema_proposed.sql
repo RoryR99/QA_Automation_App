@@ -155,6 +155,10 @@ create table if not exists public.production_runs (
   description text,
   mes_completed boolean not null default false,
   job_transfer_completed boolean not null default false,
+  cip_completed boolean not null default false,
+  cip_methods text[] not null default '{}'::text[],
+  cop_completed boolean not null default false,
+  cop_chemicals text[] not null default '{}'::text[],
   destination_local boolean not null default false,
   destination_export boolean not null default false,
   label_sample_photo_url text,
@@ -236,10 +240,6 @@ create table if not exists public.product_spec_inspections (
   closure_supplier text,
   net_completed boolean not null default false,
   cp_and_cpk_completed boolean not null default false,
-  cip_completed boolean not null default false,
-  cip_method text,
-  cop_completed boolean not null default false,
-  cop_chemical text,
   constraint product_spec_inspections_spec_snapshot_match
     foreign key (brand, flavor, package_size_ml)
     references public.beverage_quality_measurements(brand, flavor, packagesizeml)

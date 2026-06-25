@@ -51,6 +51,10 @@ export interface ProductionRun {
   export?: boolean;
   labelsamplephoto?: string;
   codeverificationphoto?: string;
+  cipcompletion?: boolean;
+  cipmethod?: string[];
+  copcompletion?: boolean;
+  copchemical?: string[];
 }
 
 export interface StartRunInput {
@@ -81,6 +85,10 @@ export interface StartRunInput {
   export?: boolean;
   labelsamplephoto?: string;
   codeverificationphoto?: string;
+  cipcompletion?: boolean;
+  cipmethod?: string[];
+  copcompletion?: boolean;
+  copchemical?: string[];
 }
 
 export interface BeverageQualityMeasurement {

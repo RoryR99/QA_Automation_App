@@ -26,6 +26,21 @@ const shiftOptions: Array<{ key: ProductionRunShiftKey; label: string }> = [
   { key: 'Shiftkey2', label: 'Shift C' },
 ];
 
+const cipMethodLabels = {
+  recirculation: 'Recirculation',
+  flush: 'Flush',
+  sanitize: 'Sanitize',
+} as const;
+
+const copChemicalLabels = {
+  caustic: 'Caustic',
+  acid: 'Acid',
+  sanitizer: 'Sanitizer',
+} as const;
+
+type CipMethod = keyof typeof cipMethodLabels;
+type CopChemical = keyof typeof copChemicalLabels;
+
 interface RunFormState {
   mfgDate: string;
   linenumber: string;
@@ -51,6 +66,10 @@ interface RunFormState {
   export: boolean;
   labelsamplephoto: string;
   codeverificationphoto: string;
+  cipcompletion: boolean;
+  cipmethod: CipMethod[];
+  copcompletion: boolean;
+  copchemical: CopChemical[];
 }
 
 type FormErrors = Partial<Record<keyof RunFormState, string>>;
@@ -81,6 +100,10 @@ function buildInitialForm(): RunFormState {
     export: false,
     labelsamplephoto: '',
     codeverificationphoto: '',
+    cipcompletion: false,
+    cipmethod: [],
+    copcompletion: false,
+    copchemical: [],
   };
 }
 
@@ -91,6 +114,14 @@ function optionalValue(value: string) {
 
 function getShiftLabel(shiftKey: ProductionRunShiftKey) {
   return shiftOptions.find((option) => option.key === shiftKey)?.label ?? shiftKey;
+}
+
+function toggleArrayValue<T extends string>(values: T[], value: T, checked: boolean) {
+  if (checked) {
+    return values.includes(value) ? values : [...values, value];
+  }
+
+  return values.filter((item) => item !== value);
 }
 
 function CheckboxField({
@@ -203,6 +234,14 @@ export function IndexPage() {
       nextErrors.qatechnician = 'QA Technician is required.';
     }
 
+    if (form.cipcompletion && form.cipmethod.length === 0) {
+      nextErrors.cipmethod = 'Select at least one CIP method.';
+    }
+
+    if (form.copcompletion && form.copchemical.length === 0) {
+      nextErrors.copchemical = 'Select at least one COP chemical.';
+    }
+
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -236,6 +275,10 @@ export function IndexPage() {
       export: payload.export,
       labelsamplephoto: payload.labelsamplephoto,
       codeverificationphoto: payload.codeverificationphoto,
+      cipcompletion: payload.cipcompletion,
+      cipmethod: payload.cipmethod,
+      copcompletion: payload.copcompletion,
+      copchemical: payload.copchemical,
     };
   };
 
@@ -276,6 +319,14 @@ export function IndexPage() {
       ...(form.export && { export: true }),
       ...(form.labelsamplephoto && { labelsamplephoto: form.labelsamplephoto }),
       ...(form.codeverificationphoto && { codeverificationphoto: form.codeverificationphoto }),
+      ...(form.cipcompletion && { cipcompletion: true }),
+      ...(form.cipcompletion && form.cipmethod.length > 0 && {
+        cipmethod: form.cipmethod.map((method) => cipMethodLabels[method]),
+      }),
+      ...(form.copcompletion && { copcompletion: true }),
+      ...(form.copcompletion && form.copchemical.length > 0 && {
+        copchemical: form.copchemical.map((chemical) => copChemicalLabels[chemical]),
+      }),
     };
 
     try {
@@ -562,6 +613,92 @@ export function IndexPage() {
                 placeholder="Enter any additional notes..."
                 rows={4}
               />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <Label className="text-base font-medium">CIP Completion</Label>
+                    <p className="mt-1 text-sm text-muted-foreground">Has Clean-In-Place process been completed?</p>
+                  </div>
+                  <Select
+                    value={form.cipcompletion ? 'yes' : 'no'}
+                    onChange={(event) => {
+                      const enabled = event.target.value === 'yes';
+                      handleFieldChange('cipcompletion', enabled);
+                      if (!enabled) {
+                        handleFieldChange('cipmethod', []);
+                      }
+                    }}
+                    className="w-full md:w-24"
+                  >
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </Select>
+                </div>
+                {form.cipcompletion && (
+                  <div className="space-y-3 border-l-2 border-primary/30 pl-4">
+                    <Label className="text-sm">CIP Methods</Label>
+                    <div className="grid gap-3">
+                      {Object.entries(cipMethodLabels).map(([key, label]) => (
+                        <CheckboxField
+                          key={key}
+                          id={`cipmethod-${key}`}
+                          label={label}
+                          checked={form.cipmethod.includes(key as CipMethod)}
+                          onChange={(checked) =>
+                            handleFieldChange('cipmethod', toggleArrayValue(form.cipmethod, key as CipMethod, checked))
+                          }
+                        />
+                      ))}
+                    </div>
+                    {renderError('cipmethod')}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <Label className="text-base font-medium">COP Completion</Label>
+                    <p className="mt-1 text-sm text-muted-foreground">Has Clean-Out-of-Place process been completed?</p>
+                  </div>
+                  <Select
+                    value={form.copcompletion ? 'yes' : 'no'}
+                    onChange={(event) => {
+                      const enabled = event.target.value === 'yes';
+                      handleFieldChange('copcompletion', enabled);
+                      if (!enabled) {
+                        handleFieldChange('copchemical', []);
+                      }
+                    }}
+                    className="w-full md:w-24"
+                  >
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </Select>
+                </div>
+                {form.copcompletion && (
+                  <div className="space-y-3 border-l-2 border-primary/30 pl-4">
+                    <Label className="text-sm">COP Chemicals</Label>
+                    <div className="grid gap-3">
+                      {Object.entries(copChemicalLabels).map(([key, label]) => (
+                        <CheckboxField
+                          key={key}
+                          id={`copchemical-${key}`}
+                          label={label}
+                          checked={form.copchemical.includes(key as CopChemical)}
+                          onChange={(checked) =>
+                            handleFieldChange('copchemical', toggleArrayValue(form.copchemical, key as CopChemical, checked))
+                          }
+                        />
+                      ))}
+                    </div>
+                    {renderError('copchemical')}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

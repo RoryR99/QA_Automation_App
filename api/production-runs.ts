@@ -12,6 +12,10 @@ function buildProductionCode(input: StartRunInput) {
   return `${input.brand.slice(0, 3).toUpperCase()}-${input.flavour.slice(0, 3).toUpperCase()}-${stamp}`;
 }
 
+function optionalStringArray(value: unknown) {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0) : undefined;
+}
+
 async function attachBatchRows(supabase: SupabaseClient, runs: ProductionRunRow[]) {
   if (runs.length === 0) {
     return runs;
@@ -82,6 +86,10 @@ export default async function handler(req: { method?: string; body?: unknown }, 
         package_type: input.packageType,
         line: input.line,
         shift: input.shift,
+        cip_completed: input.cipcompletion ?? false,
+        cip_methods: optionalStringArray(input.cipmethod) ?? [],
+        cop_completed: input.copcompletion ?? false,
+        cop_chemicals: optionalStringArray(input.copchemical) ?? [],
         payload_json: input,
         created_at: new Date().toISOString(),
       };

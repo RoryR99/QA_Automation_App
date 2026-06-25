@@ -32,21 +32,6 @@ interface ClosureMeasurement {
   removalTorque?: number;
 }
 
-const cipMethodLabels = {
-  recirculation: 'Recirculation',
-  flush: 'Flush',
-  sanitize: 'Sanitize',
-} as const;
-
-const copChemicalLabels = {
-  caustic: 'Caustic',
-  acid: 'Acid',
-  sanitizer: 'Sanitizer',
-} as const;
-
-type CipMethod = keyof typeof cipMethodLabels;
-type CopChemical = keyof typeof copChemicalLabels;
-
 const defaultSpecFields: SpecField[] = [
   { key: 'fillheight', label: 'Fill Height', unit: 'mm' },
   { key: 'brix', label: 'Brix', unit: 'deg Bx' },
@@ -111,10 +96,6 @@ export function ProductSpecsPage() {
 
   const [netCompletion, setNetCompletion] = useState(false);
   const [cpAndCpkCompletion, setCpAndCpkCompletion] = useState(false);
-  const [cipCompletion, setCipCompletion] = useState(false);
-  const [cipMethod, setCipMethod] = useState<CipMethod | ''>('');
-  const [copCompletion, setCopCompletion] = useState(false);
-  const [copChemical, setCopChemical] = useState<CopChemical | ''>('');
 
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedFlavor, setSelectedFlavor] = useState('');
@@ -319,16 +300,6 @@ export function ProductSpecsPage() {
       return;
     }
 
-    if (cipCompletion && !cipMethod) {
-      toast.error('Please select a CIP method.');
-      return;
-    }
-
-    if (copCompletion && !copChemical) {
-      toast.error('Please select a COP chemical.');
-      return;
-    }
-
     try {
       await createInspection.mutateAsync({
         hourlyinspectionname: `Product Specs - ${new Date().toLocaleString()}`,
@@ -350,10 +321,6 @@ export function ProductSpecsPage() {
         closuresupplier: closureSupplier || undefined,
         netcompletion: netCompletion,
         cpandcpkcompletion: cpAndCpkCompletion,
-        cipcompletion: cipCompletion,
-        cipmethod: cipCompletion ? cipMethodLabels[cipMethod as CipMethod] : undefined,
-        copcompletion: copCompletion,
-        copchemical: copCompletion ? copChemicalLabels[copChemical as CopChemical] : undefined,
         closureMeasurements: closureMeasurements
           .map((measurement, index) => ({
             measurementnumber: index + 1,
@@ -621,86 +588,6 @@ export function ProductSpecsPage() {
                 value={cpAndCpkCompletion}
                 onChange={setCpAndCpkCompletion}
               />
-
-              <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <Label className="text-base font-medium">CIP Completion</Label>
-                    <p className="mt-1 text-sm text-muted-foreground">Has Clean-In-Place process been completed?</p>
-                  </div>
-                  <Select
-                    value={cipCompletion ? 'yes' : 'no'}
-                    onChange={(event) => {
-                      const enabled = event.target.value === 'yes';
-                      setCipCompletion(enabled);
-                      if (!enabled) {
-                        setCipMethod('');
-                      }
-                    }}
-                    className="w-full md:w-24"
-                  >
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </Select>
-                </div>
-                {cipCompletion && (
-                  <div className="border-l-2 border-primary/30 pl-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm">CIP Method</Label>
-                      <Select value={cipMethod} onChange={(event) => setCipMethod(event.target.value as CipMethod | '')} className="w-full md:w-[220px]">
-                        <option value="">Select method</option>
-                        {Object.entries(cipMethodLabels).map(([key, label]) => (
-                          <option key={key} value={key}>
-                            {label}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <Label className="text-base font-medium">COP Completion</Label>
-                    <p className="mt-1 text-sm text-muted-foreground">Has Clean-Out-of-Place process been completed?</p>
-                  </div>
-                  <Select
-                    value={copCompletion ? 'yes' : 'no'}
-                    onChange={(event) => {
-                      const enabled = event.target.value === 'yes';
-                      setCopCompletion(enabled);
-                      if (!enabled) {
-                        setCopChemical('');
-                      }
-                    }}
-                    className="w-full md:w-24"
-                  >
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </Select>
-                </div>
-                {copCompletion && (
-                  <div className="border-l-2 border-primary/30 pl-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm">COP Chemical</Label>
-                      <Select
-                        value={copChemical}
-                        onChange={(event) => setCopChemical(event.target.value as CopChemical | '')}
-                        className="w-full md:w-[220px]"
-                      >
-                        <option value="">Select chemical</option>
-                        {Object.entries(copChemicalLabels).map(([key, label]) => (
-                          <option key={key} value={key}>
-                            {label}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-                  </div>
-                )}
-              </div>
             </CardContent>
           </Card>
         </div>

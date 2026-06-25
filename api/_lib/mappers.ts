@@ -34,6 +34,8 @@ export function mapUser(row: Record<string, unknown>): MockUser {
 export function mapProductionRun(row: Record<string, unknown>): ProductionRun {
   const payload = parsePayload<Partial<ProductionRun>>(row.payload_json ?? {});
   const batchRows = Array.isArray(row.production_run_batches) ? row.production_run_batches : [];
+  const cipMethods = Array.isArray(row.cip_methods) ? row.cip_methods.map(String) : payload.cipmethod;
+  const copChemicals = Array.isArray(row.cop_chemicals) ? row.cop_chemicals.map(String) : payload.copchemical;
 
   return {
     ...payload,
@@ -48,6 +50,10 @@ export function mapProductionRun(row: Record<string, unknown>): ProductionRun {
     status: (row.status === 'closed' ? 'closed' : 'active') satisfies ProductionRunStatus,
     closedAt: typeof row.closed_at === 'string' ? row.closed_at : undefined,
     batchNumbers: batchRows.map((batch) => mapProductionRunBatch(batch as Record<string, unknown>)),
+    cipcompletion: typeof row.cip_completed === 'boolean' ? row.cip_completed : payload.cipcompletion,
+    cipmethod: cipMethods,
+    copcompletion: typeof row.cop_completed === 'boolean' ? row.cop_completed : payload.copcompletion,
+    copchemical: copChemicals,
   };
 }
 

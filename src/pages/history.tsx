@@ -73,9 +73,9 @@ const fieldLabelOverrides: Record<string, string> = {
   netcompletion: 'Net Completion',
   cpandcpkcompletion: 'CP and CPK Completion',
   cipcompletion: 'CIP Completion',
-  cipmethod: 'CIP Method',
+  cipmethod: 'CIP Methods',
   copcompletion: 'COP Completion',
-  copchemical: 'COP Chemical',
+  copchemical: 'COP Chemicals',
   pallettagsKey: 'Pallet Tags',
   pallettaginfo: 'Pallet Tag Info',
   stickersKey: 'Stickers',
@@ -128,6 +128,10 @@ function formatPayloadValue(key: string, value: unknown) {
 
   if (typeof value === 'boolean') {
     return value ? 'Yes' : 'No';
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item)).join(', ');
   }
 
   if (typeof value === 'string') {

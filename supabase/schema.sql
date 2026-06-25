@@ -18,6 +18,10 @@ create table if not exists public.production_runs (
   shift text not null,
   status text not null default 'active',
   closed_at timestamptz,
+  cip_completed boolean not null default false,
+  cip_methods text[] not null default '{}'::text[],
+  cop_completed boolean not null default false,
+  cop_chemicals text[] not null default '{}'::text[],
   payload_json jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default timezone('utc', now()),
   constraint production_runs_status_check
@@ -31,6 +35,18 @@ alter table public.production_runs
 
 alter table public.production_runs
   add column if not exists closed_at timestamptz;
+
+alter table public.production_runs
+  add column if not exists cip_completed boolean not null default false;
+
+alter table public.production_runs
+  add column if not exists cip_methods text[] not null default '{}'::text[];
+
+alter table public.production_runs
+  add column if not exists cop_completed boolean not null default false;
+
+alter table public.production_runs
+  add column if not exists cop_chemicals text[] not null default '{}'::text[];
 
 create table if not exists public.production_run_batches (
   id text primary key,
@@ -185,10 +201,6 @@ create table if not exists public.product_spec_inspections (
   closure_supplier text,
   net_completed boolean not null default false,
   cp_and_cpk_completed boolean not null default false,
-  cip_completed boolean not null default false,
-  cip_method text,
-  cop_completed boolean not null default false,
-  cop_chemical text,
   created_at timestamptz not null default timezone('utc', now())
 );
 
