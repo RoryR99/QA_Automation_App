@@ -26,6 +26,35 @@ const shiftOptions: Array<{ key: ProductionRunShiftKey; label: string }> = [
   { key: 'Shiftkey2', label: 'Shift C' },
 ];
 
+const lineNumberOptions = ['1', '2', '3', '4', '6', '8', '10'];
+
+const qaTechnicianById: Record<string, string> = {
+  '1191': 'RAKESH BOODLAL',
+  '11536': 'VALINI DEHU',
+  '11816': 'NIKOLI MITCHELL',
+  '12406': 'AMEER KARIM',
+  '2603': 'LESTER PATTERSON',
+  '14949': 'SARITA NAGESSAR',
+  '14891': 'BRANDON CHANG-NOEL',
+  '8216': 'ERBERT POLO',
+  '13724': 'JIMMEL MCCREE',
+  '13539': 'JONATHAN JHAGROO',
+  '14983': 'ZAUFEER HOSEIN',
+  '14902': 'RHONDA SMITH',
+  '9225': 'JUNIOR BALDEO',
+  '14656': 'AHMID SHAH',
+  '14793': 'DEBBIE SAMSUNDAR',
+  '14950': 'AKASH RAMROOP',
+  '15063': 'DEMALIA ELBOURNE',
+  '9678': 'KERRY JAIKARAN',
+  '9179': 'RONDELL MOHAMMED',
+  '7378': 'SANGEET DOOKIE',
+  '13690': 'CELINE DEHU',
+  '15041': 'MICHELE GAYAPERSAD',
+  '1352': 'DINESH MAHARAJ',
+  '14982': 'RUTH BETHEL',
+};
+
 const cipMethodLabels = {
   recirculation: 'Recirculation',
   flush: 'Flush',
@@ -177,12 +206,6 @@ export function IndexPage() {
   ).sort((left, right) => left.localeCompare(right));
 
   useEffect(() => {
-    if (user?.displayName && !form.qatechnician.trim()) {
-      setForm((prev) => ({ ...prev, qatechnician: user.displayName }));
-    }
-  }, [form.qatechnician, user?.displayName]);
-
-  useEffect(() => {
     if (!form.brand) {
       return;
     }
@@ -201,6 +224,18 @@ export function IndexPage() {
   const handleFieldChange = <K extends keyof RunFormState>(key: K, value: RunFormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
+  };
+
+  const handleQaTechnicianIdChange = (value: string) => {
+    const nextId = value.replace(/\D/g, '');
+    const technicianName = qaTechnicianById[nextId] ?? '';
+
+    setForm((prev) => ({
+      ...prev,
+      uniqueinspectorid: nextId,
+      qatechnician: technicianName,
+    }));
+    setErrors((prev) => ({ ...prev, uniqueinspectorid: undefined, qatechnician: undefined }));
   };
 
   const validateForm = () => {
@@ -228,6 +263,12 @@ export function IndexPage() {
 
     if (!form.productionsupervisor.trim()) {
       nextErrors.productionsupervisor = 'Production Supervisor is required.';
+    }
+
+    if (!form.uniqueinspectorid.trim()) {
+      nextErrors.uniqueinspectorid = 'QA Technician ID is required.';
+    } else if (!qaTechnicianById[form.uniqueinspectorid.trim()]) {
+      nextErrors.uniqueinspectorid = 'Enter a valid QA Technician ID.';
     }
 
     if (!form.qatechnician.trim()) {
@@ -390,12 +431,18 @@ export function IndexPage() {
           <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="linenumber">Line Number *</Label>
-              <Input
+              <Select
                 id="linenumber"
                 value={form.linenumber}
                 onChange={(event) => handleFieldChange('linenumber', event.target.value)}
-                placeholder="e.g. Line 1"
-              />
+              >
+                <option value="">Select line number</option>
+                {lineNumberOptions.map((lineNumber) => (
+                  <option key={lineNumber} value={lineNumber}>
+                    {lineNumber}
+                  </option>
+                ))}
+              </Select>
               {renderError('linenumber')}
             </div>
 
@@ -493,6 +540,35 @@ export function IndexPage() {
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
+              <Label htmlFor="uniqueinspectorid">QA Technician ID *</Label>
+              <Input
+                id="uniqueinspectorid"
+                value={form.uniqueinspectorid}
+                onChange={(event) => handleQaTechnicianIdChange(event.target.value)}
+                placeholder="Enter ID"
+                inputMode="numeric"
+                list="qa-technician-ids"
+              />
+              <datalist id="qa-technician-ids">
+                {Object.keys(qaTechnicianById).map((technicianId) => (
+                  <option key={technicianId} value={technicianId} />
+                ))}
+              </datalist>
+              {renderError('uniqueinspectorid')}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="qatechnician">QA Technician Name *</Label>
+              <Input
+                id="qatechnician"
+                value={form.qatechnician}
+                readOnly
+                placeholder="Auto-filled from ID"
+              />
+              {renderError('qatechnician')}
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="productionsupervisor">Production Supervisor *</Label>
               <Input
                 id="productionsupervisor"
@@ -511,17 +587,6 @@ export function IndexPage() {
                 onChange={(event) => handleFieldChange('qashiftsupervisor', event.target.value)}
                 placeholder="Enter name"
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="qatechnician">QA Technician *</Label>
-              <Input
-                id="qatechnician"
-                value={form.qatechnician}
-                onChange={(event) => handleFieldChange('qatechnician', event.target.value)}
-                placeholder="Enter name"
-              />
-              {renderError('qatechnician')}
             </div>
 
             <div className="space-y-2">
@@ -590,16 +655,6 @@ export function IndexPage() {
                   value={form.epicorsyrup}
                   onChange={(event) => handleFieldChange('epicorsyrup', event.target.value)}
                   placeholder="Enter syrup number"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="uniqueinspectorid">QA Technician ID</Label>
-                <Input
-                  id="uniqueinspectorid"
-                  value={form.uniqueinspectorid}
-                  onChange={(event) => handleFieldChange('uniqueinspectorid', event.target.value)}
-                  placeholder="Enter ID"
                 />
               </div>
             </div>
